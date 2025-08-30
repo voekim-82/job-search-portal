@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JobScope — Job Search Tool</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --primary:#2563eb;
+      --primary-10: rgba(37,99,235,.10);
+      --card:#ffffff;
+      --shadow: 0 10px 25px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+      --radius:16px;
+      --font-headings: 'Montserrat', sans-serif;
+      --font-body: 'Nunito', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body{ margin:0; font-family: var(--font-body); background: var(--bg); color: var(--text); }
+
+    h1,h2,h3,h4,h5,h6 { font-family: var(--font-headings); }
+
+    /* Header */
+    .topbar{ position:sticky; top:0; background: rgba(255,255,255,.9); backdrop-filter: blur(12px); border-bottom: 1px solid #eef2f7; z-index:10; }
+    .topbar__inner{ max-width:980px; margin:0 auto; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .nav-right{ display:flex; gap:8px; }
+
+    /* Hero */
+    .hero{ min-height:100dvh; display:grid; place-items:center; padding:22px; }
+    .hero__inner{ width:100%; max-width:680px; display:grid; justify-items:center; gap:24px; text-align:center; }
+    .logo{ width:180px; height:56px; border-radius:16px; display:grid; place-items:center; box-shadow: var(--shadow); background:linear-gradient(135deg,#f9fafb,#eef2ff); color:#1f2937; font-weight:800; font-family: var(--font-headings); }
+    .intro { font-size:15px; color:var(--muted); max-width:540px; }
+
+    .search{ width:100%; display:flex; gap:8px; }
+    .input{ width:100%; padding:14px 16px; border-radius:999px; border:1px solid #e5e7eb; box-shadow: var(--shadow); font-size:16px; outline:none; }
+    .btn{ border:none; background: var(--primary); color:#fff; padding:12px 18px; border-radius:999px; font-weight:600; cursor:pointer; }
+    .btn--ghost{ background:#f3f4f6; color:#111827; }
+
+    .wrap{ max-width:980px; margin:24px auto 80px; padding:0 16px; }
+    .card{ background:var(--card); border:1px solid #edf2f7; border-radius:16px; box-shadow: var(--shadow); padding:18px; margin-bottom:20px; }
+    .calc__row{ display:grid; grid-template-columns:1fr 150px; gap:10px; align-items:center; margin-bottom:10px; }
+    .calc__row input, .calc__row select { width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:10px; }
+    .calc__total{ display:flex; justify-content:space-between; margin-top:10px; }
+    .grid--3{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; }
+    .pill{ background:#f8fafc; border:1px solid #eef2f7; border-radius:999px; padding:6px 10px; font-size:12px; }
+    .hidden{ display:none !important; }
+    .mono{ font-family:monospace; }
+  </style>
+</head>
+<body>
+
+  <!-- Home -->
+  <main id="home" class="hero">
+    <section class="hero__inner">
+      <div class="logo">JobScope</div>
+      <p class="intro">Search for a job title to instantly view its description, grade, and recommended salaries. Use the built-in calculators to estimate your total pay package and allowances.</p>
+      <form id="homeSearchForm" class="search">
+        <input id="homeQuery" class="input" placeholder="Search job title..." required autofocus />
+        <button class="btn" type="submit">Search</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- Results -->
+  <header id="resultsHeader" class="topbar hidden">
+    <div class="topbar__inner">
+      <div class="logo" style="width:140px;height:44px;font-size:16px;">JobScope</div>
+      <form id="resultsSearchForm" class="search">
+        <input id="resultsQuery" class="input" placeholder="Search another job..." required />
+        <button class="btn" type="submit">Search</button>
+      </form>
+      <div class="nav-right">
+        <button id="backHomeBtn" class="btn btn--ghost" type="button">Home</button>
+        <a href="about.html" class="btn btn--ghost">About</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="results" class="wrap hidden">
+    <div class="results">
+
+      <!-- Job Summary -->
+      <article id="jobCard" class="card" style="display:none;">
+        <h1 id="jobTitle">—</h1>
+        <p id="jobDesc"></p>
+        <table style="width:100%; margin-top:10px;">
+          <thead><tr><th>Institution Type</th><th>Basic</th></tr></thead>
+          <tbody id="salaryRows"></tbody>
+        </table>
+        <div style="margin-top:10px;">
+          <label>Currency</label>
+          <select id="currencySelect">
+            <option value="USD" selected>USD $</option>
+            <option value="ZWL">ZWL</option>
+          </select>
+          <label style="margin-left:10px;">Institution</label>
+          <select id="instSelect"></select>
+        </div>
+      </article>
+
+      <!-- Salary Calculator -->
+      <article id="calcCard" class="card" style="display:none;">
+        <h3>Salary Calculator</h3>
+        <div class="calc__row"><label>Basic Salary</label><input id="basicInput" type="number" /></div>
+        <div class="calc__row"><label>Housing Allowance</label><input id="housingInput" type="number" /></div>
+        <div class="calc__row"><label>Transport Allowance</label><input id="transportInput" type="number" /></div>
+        <div class="calc__total">
+          <div>Total Allowances: <span id="allowancesTotal">—</span></div>
+          <div>Grand Total: <span id="grandTotal">—</span></div>
+        </div>
+      </article>
+
+      <!-- Recognition of Service -->
+      <article id="serviceCard" class="card" style="display:none;">
+        <h3>Recognition of Service Calculator</h3>
+        <div class="calc__row"><label>Years of Service</label><input id="yearsService" type="number" min="0" /></div>
+        <div class="calc__total">Service Allowance: <span id="serviceTotal">—</span></div>
+      </article>
+
+      <!-- Night Shift -->
+      <article id="nightCard" class="card" style="display:none;">
+        <h3>Night Shift Allowance Calculator</h3>
+        <div class="calc__row"><label>Nights Worked</label><input id="nightsWorked" type="number" min="0" /></div>
+        <div class="calc__total">Night Shift Allowance: <span id="nightTotal">—</span></div>
+      </article>
+
+      <!-- Funeral -->
+      <article id="funeralCard" class="card" style="display:none;">
+        <h3>Funeral Allowance Calculator</h3>
+        <div class="calc__row">
+          <label>Have Policy?</label>
+          <select id="hasPolicy">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="calc__row"><label>Coffin Cost</label><input id="coffinCost" type="number" min="0" /></div>
+        <div class="calc__row" id="policyRow"><label>Policy Coverage</label><input id="policyCoverage" type="number" min="0" /></div>
+        <div class="calc__total">Employer Covers: <span id="funeralTotal">—</span></div>
+      </article>
+
+      <!-- Extra Info -->
+      <article id="extraCard" class="card" style="display:none;">
+        <h3>Additional Info</h3>
+        <div class="grid--3" id="suggestions"></div>
+      </article>
+
+    </div>
+  </section>
+
+<script>
+/* Mock Data */
+const MOCK_JOBS = [
+  {
+    titles:["Teacher","High School Teacher"],
+    description:"Teaches students academic subjects, prepares lessons, evaluates performance.",
+    grade:"T1",
+    qualifications:["Bachelor of Education","Teaching License"],
+    industry:"Education",
+    responsibilities:["Prepare lesson plans","Deliver lectures","Evaluate student progress"],
+    salaries:{
+      "Boarding School":1200,
+      "Day-Urban School":900,
+      "Day-Rural School":700
+    }
+  },
+  {
+    titles:["Software Engineer","Developer"],
+    description:"Builds and maintains software applications.",
+    grade:"IT2",
+    qualifications:["BSc in Computer Science"],
+    industry:"Technology",
+    responsibilities:["Write code","Fix bugs","Collaborate in teams"],
+    salaries:{
+      "Boarding School":2000,
+      "Day-Urban School":1500,
+      "Day-Rural School":1200
+    }
+  }
+];
+
+let currentJob=null; let currentCurrency="USD"; let exchangeRate=13;
+
+/* Helpers */
+function currencySymbol(){ return currentCurrency==="USD"?"$":"ZWL"; }
+function convert(amount,rawUSD=false){ return currentCurrency==="USD"? amount : amount*exchangeRate; }
+
+/* Rendering */
+function renderJob(job){
+  currentJob=job;
+  document.getElementById("jobTitle").textContent=job.titles[0];
+  document.getElementById("jobDesc").textContent=job.description;
+
+  const salaryRows=document.getElementById("salaryRows");
+  salaryRows.innerHTML="";
+  Object.entries(job.salaries).forEach(([inst,amt])=>{
+    let tr=document.createElement("tr");
+    tr.innerHTML=`<td>${inst}</td><td class="mono">${currencySymbol()} ${convert(amt)}</td>`;
+    salaryRows.appendChild(tr);
+  });
+  const instSelect=document.getElementById("instSelect");
+  instSelect.innerHTML=Object.entries(job.salaries).map(([inst,amt])=>`<option value="${amt}">${inst}</option>`).join("");
+  document.getElementById("basicInput").value=instSelect.value;
+
+  // preset allowances
+  document.getElementById("housingInput").value=convert(150,true);
+  document.getElementById("transportInput").value=convert(80,true);
+
+  updateCalcs();
+  renderExtras(job);
+
+  ["jobCard","calcCard","serviceCard","nightCard","funeralCard","extraCard"].forEach(id=>document.getElementById(id).style.display="");
+}
+
+/* Calculations */
+function updateCalcs(){
+  const basic=+document.getElementById("basicInput").value||0;
+  const housing=+document.getElementById("housingInput").value||0;
+  const transport=+document.getElementById("transportInput").value||0;
+  const allowances=housing+transport;
+  document.getElementById("allowancesTotal").textContent=`${currencySymbol()} ${allowances}`;
+  document.getElementById("grandTotal").textContent=`${currencySymbol()} ${basic+allowances}`;
+
+  const years=+document.getElementById("yearsService").value||0;
+  document.getElementById("serviceTotal").textContent=`${currencySymbol()} ${((basic*0.01)*years).toFixed(2)}`;
+
+  const nights=+document.getElementById("nightsWorked").value||0;
+  document.getElementById("nightTotal").textContent=`${currencySymbol()} ${(basic*0.01*nights).toFixed(2)}`;
+
+  // Funeral calc
+  const hasPolicy=document.getElementById("hasPolicy").value;
+  const coffin=+document.getElementById("coffinCost").value||0;
+  let owed=0;
+  if(hasPolicy==="yes"){
+    const coverage=+document.getElementById("policyCoverage").value||0;
+    if(coverage>=coffin) owed=0;
+    else owed=coffin-coverage;
+    document.getElementById("policyRow").style.display="";
+  } else {
+    owed=coffin*0.5;
+    document.getElementById("policyRow").style.display="none";
+  }
+  document.getElementById("funeralTotal").textContent=`${currencySymbol()} ${owed.toFixed(2)}`;
+}
+
+/* Extras */
+function renderExtras(job){
+  document.getElementById("suggestions").innerHTML=`
+    <div><strong>Qualifications</strong><div>${job.qualifications.map(q=>`<span class="pill">${q}</span>`).join("")}</div></div>
+    <div><strong>Industry</strong><div><span class="pill">${job.industry}</span></div></div>
+    <div><strong>Responsibilities</strong><div>${job.responsibilities.map(r=>`<span class="pill">${r}</span>`).join("")}</div></div>
+  `;
+}
+
+/* Search */
+function findJob(q){ return MOCK_JOBS.find(j=>j.titles.some(t=>t.toLowerCase().includes(q.toLowerCase()))); }
+function search(q){
+  const job=findJob(q);
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("resultsHeader").classList.remove("hidden");
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("resultsQuery").value=q;
+  if(job) renderJob(job);
+}
+
+/* Events */
+document.getElementById("homeSearchForm").addEventListener("submit",e=>{ e.preventDefault(); search(document.getElementById("homeQuery").value); });
+document.getElementById("resultsSearchForm").addEventListener("submit",e=>{ e.preventDefault(); search(document.getElementById("resultsQuery").value); });
+document.getElementById("backHomeBtn").addEventListener("click",()=>{ document.getElementById("home").classList.remove("hidden"); document.getElementById("resultsHeader").classList.add("hidden"); document.getElementById("results").classList.add("hidden"); });
+
+["basicInput","housingInput","transportInput","yearsService","nightsWorked","coffinCost","policyCoverage","hasPolicy"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",updateCalcs);
+  document.getElementById(id).addEventListener("change",updateCalcs);
+});
+document.getElementById("instSelect").addEventListener("change",()=>{ document.getElementById("basicInput").value=document.getElementById("instSelect").value; updateCalcs(); });
+document.getElementById("currencySelect").addEventListener("change",()=>{
+  currentCurrency=document.getElementById("currencySelect").value;
+  if(currentCurrency==="ZWL"){ 
+    const rate=prompt("Enter USD to ZWL exchange rate:","13"); 
+    exchangeRate=+rate||13; 
+  }
+  renderJob(currentJob);
+});
+</script>
+</body>
+</html>
